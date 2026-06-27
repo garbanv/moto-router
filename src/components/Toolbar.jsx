@@ -1,6 +1,12 @@
 import { useState, useRef } from 'react'
 import { exportGPX, importGPX } from '../utils/gpx'
 
+const PROFILES = [
+  { id: 'driving', label: 'Moto/Coche', icon: '🏍️' },
+  { id: 'cycling', label: 'Bici', icon: '🚲' },
+  { id: 'walking', label: 'A pie', icon: '🚶' },
+]
+
 export default function Toolbar({
   mode,
   onModeChange,
@@ -16,6 +22,8 @@ export default function Toolbar({
   onDeleteRoute,
   onImportRoute,
   gpsError,
+  profile,
+  onProfileChange,
 }) {
   const fileInputRef = useRef(null)
   const [showSaved, setShowSaved] = useState(false)
@@ -66,6 +74,25 @@ export default function Toolbar({
           <span className="tool-text">{isTracking ? 'Detener' : 'GPS'}</span>
         </button>
         {gpsError && <span className="gps-error">{gpsError}</span>}
+      </div>
+
+      <div className="toolbar-divider" />
+
+      <div className="toolbar-section">
+        <span className="toolbar-label">Perfil</span>
+        <div className="toolbar-buttons">
+          {PROFILES.map((p) => (
+            <button
+              key={p.id}
+              className={`tool-btn ${profile === p.id ? 'active' : ''}`}
+              onClick={() => onProfileChange(p.id)}
+              title={p.label}
+            >
+              <span className="tool-icon">{p.icon}</span>
+              <span className="tool-text">{p.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="toolbar-divider" />

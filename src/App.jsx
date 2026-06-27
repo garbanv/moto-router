@@ -70,6 +70,8 @@ export default function App() {
     deleteSavedRoute,
     importRoute,
     recalculateFrom,
+    profile,
+    changeProfile,
   } = useRoute()
 
   useEffect(() => {
@@ -166,6 +168,8 @@ export default function App() {
         onDeleteRoute={deleteSavedRoute}
         onImportRoute={importRoute}
         gpsError={gpsError}
+        profile={profile}
+        onProfileChange={changeProfile}
       />
 
       <div className="main-content">

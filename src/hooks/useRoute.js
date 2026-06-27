@@ -25,6 +25,7 @@ export function useRoute() {
   const [routeDuration, setRouteDuration] = useState(0)
   const [savedRoutes, setSavedRoutes] = useState(loadRoutes)
   const [isCalculating, setIsCalculating] = useState(false)
+  const [profile, setProfile] = useState('driving')
   const startPosRef = useRef(null)
   const abortRef = useRef(null)
 
@@ -58,7 +59,8 @@ export function useRoute() {
     setRouteDuration(0)
   }, [])
 
-  const calculateRoute = useCallback(async (wps, startPos) => {
+  const calculateRoute = useCallback(async (wps, startPos, routeProfile) => {
+    const p = routeProfile || profile
     const points = startPos ? [startPos, ...wps] : wps
     if (points.length < 2) {
       setRouteCoords([])
@@ -74,7 +76,7 @@ export function useRoute() {
     setIsCalculating(true)
     try {
       const coordinates = points.map((wp) => `${wp.lng},${wp.lat}`).join(';')
-      const url = `https://router.project-osrm.org/route/v1/driving/${coordinates}?overview=full&geometries=geojson&steps=true`
+      const url = `https://router.project-osrm.org/route/v1/${p}/${coordinates}?overview=full&geometries=geojson&steps=true`
 
       const res = await fetch(url, { signal: controller.signal })
       if (!res.ok) throw new Error('Routing request failed')
@@ -95,21 +97,21 @@ export function useRoute() {
     } finally {
       setIsCalculating(false)
     }
-  }, [])
+  }, [profile])
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      calculateRoute(waypoints, startPosRef.current)
+      calculateRoute(waypoints, startPosRef.current, profile)
     }, 300)
     return () => clearTimeout(timer)
-  }, [waypoints, calculateRoute])
+  }, [waypoints, calculateRoute, profile])
 
   const recalculateFrom = useCallback((startPos) => {
     startPosRef.current = startPos
     if (startPos && waypoints.length > 0) {
-      calculateRoute(waypoints, startPos)
+      calculateRoute(waypoints, startPos, profile)
     }
-  }, [waypoints, calculateRoute])
+  }, [waypoints, calculateRoute, profile])
 
   const hasStart = !!(startPosRef.current && waypoints.length > 0)
 
@@ -152,6 +154,10 @@ export function useRoute() {
     setWaypoints(wps)
   }, [])
 
+  const changeProfile = useCallback((newProfile) => {
+    setProfile(newProfile)
+  }, [])
+
   return {
     waypoints,
     routeCoords,
@@ -160,6 +166,7 @@ export function useRoute() {
     isCalculating,
     savedRoutes,
     hasStart,
+    profile,
     addWaypoint,
     removeWaypoint,
     updateWaypoint,
@@ -170,5 +177,6 @@ export function useRoute() {
     deleteSavedRoute,
     importRoute,
     recalculateFrom,
+    changeProfile,
   }
 }
