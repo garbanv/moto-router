@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import MapView from './components/MapView'
 import Toolbar from './components/Toolbar'
 import RoutePanel from './components/RoutePanel'
@@ -7,7 +7,7 @@ import { useRoute } from './hooks/useRoute'
 import { useGPS } from './hooks/useGPS'
 
 const PASS_THRESHOLD_KM = 0.05
-const OFF_ROUTE_THRESHOLD_KM = 0.15
+const OFF_ROUTE_THRESHOLD_KM = 0.05
 
 function haversine(lat1, lon1, lat2, lon2) {
   const R = 6371
@@ -37,6 +37,8 @@ export default function App() {
   const [mode, setMode] = useState('add')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [followMode, setFollowMode] = useState(true)
+  const [offRoute, setOffRoute] = useState(false)
+  const recalcLockRef = useRef(false)
 
   const {
     position: gpsPosition,
@@ -70,8 +72,6 @@ export default function App() {
     recalculateFrom,
   } = useRoute()
 
-  const [offRoute, setOffRoute] = useState(false)
-
   useEffect(() => {
     if (gpsPosition && isTracking && waypoints.length > 0) {
       recalculateFrom(gpsPosition)
@@ -80,33 +80,35 @@ export default function App() {
 
   useEffect(() => {
     if (!gpsPosition || !isTracking) return
-
-    if (waypoints.length > 0) {
-      const distToFirst = haversine(
-        gpsPosition.lat, gpsPosition.lng,
-        waypoints[0].lat, waypoints[0].lng
-      )
-      if (distToFirst < PASS_THRESHOLD_KM) {
-        removeWaypoint(0)
-      }
+    if (waypoints.length === 0) {
+      setOffRoute(false)
+      return
     }
 
-    if (routeCoords.length > 0 && waypoints.length > 0) {
+    const distToFirst = haversine(
+      gpsPosition.lat, gpsPosition.lng,
+      waypoints[0].lat, waypoints[0].lng
+    )
+    if (distToFirst < PASS_THRESHOLD_KM) {
+      removeWaypoint(0)
+      return
+    }
+
+    if (routeCoords.length > 0 && !recalcLockRef.current) {
       const distToRoute = distanceToRoute(gpsPosition, routeCoords)
       if (distToRoute > OFF_ROUTE_THRESHOLD_KM) {
         setOffRoute(true)
+        recalcLockRef.current = true
+        recalculateFrom(gpsPosition)
+        setTimeout(() => {
+          recalcLockRef.current = false
+          setOffRoute(false)
+        }, 3000)
       } else {
         setOffRoute(false)
       }
     }
-  }, [gpsPosition, isTracking, waypoints, routeCoords, removeWaypoint])
-
-  useEffect(() => {
-    if (offRoute && gpsPosition && waypoints.length > 0) {
-      recalculateFrom(gpsPosition)
-      setOffRoute(false)
-    }
-  }, [offRoute, gpsPosition, waypoints, recalculateFrom])
+  }, [gpsPosition, isTracking, waypoints, routeCoords, removeWaypoint, recalculateFrom])
 
   const handleMapClick = useCallback(
     (latlng) => {
