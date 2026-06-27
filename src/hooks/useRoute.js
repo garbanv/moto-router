@@ -19,7 +19,7 @@ function saveRoutes(routes) {
   }
 }
 
-export function useRoute() {
+export function useRoute(startPosition) {
   const [waypoints, setWaypoints] = useState([])
   const [routeCoords, setRouteCoords] = useState([])
   const [routeDistance, setRouteDistance] = useState(0)
@@ -58,8 +58,9 @@ export function useRoute() {
     setRouteDuration(0)
   }, [])
 
-  const calculateRoute = useCallback(async (wps) => {
-    if (wps.length < 2) {
+  const calculateRoute = useCallback(async (wps, startPos) => {
+    const points = startPos ? [startPos, ...wps] : wps
+    if (points.length < 2) {
       setRouteCoords([])
       setRouteDistance(0)
       setRouteDuration(0)
@@ -74,7 +75,7 @@ export function useRoute() {
 
     setIsCalculating(true)
     try {
-      const coordinates = wps.map((wp) => `${wp.lng},${wp.lat}`).join(';')
+      const coordinates = points.map((wp) => `${wp.lng},${wp.lat}`).join(';')
       const url = `https://router.project-osrm.org/route/v1/driving/${coordinates}?overview=full&geometries=geojson&steps=true`
 
       const res = await fetch(url, { signal: controller.signal })
@@ -100,18 +101,23 @@ export function useRoute() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      calculateRoute(waypoints)
+      calculateRoute(waypoints, startPosition)
     }, 300)
     return () => clearTimeout(timer)
-  }, [waypoints, calculateRoute])
+  }, [waypoints, calculateRoute, startPosition])
+
+  const hasStart = startPosition && waypoints.length > 0
 
   const saveCurrentRoute = useCallback(
     (name) => {
-      if (waypoints.length === 0) return
+      const saveWps = startPosition
+        ? [{ lat: startPosition.lat, lng: startPosition.lng, _start: true }, ...waypoints]
+        : [...waypoints]
+      if (saveWps.length === 0) return
       const route = {
         id: Date.now().toString(),
         name: name || `Ruta ${new Date().toLocaleDateString()}`,
-        waypoints: [...waypoints],
+        waypoints: saveWps,
         distance: routeDistance,
         duration: routeDuration,
         createdAt: new Date().toISOString(),
@@ -122,7 +128,7 @@ export function useRoute() {
         return next
       })
     },
-    [waypoints, routeDistance, routeDuration]
+    [waypoints, routeDistance, routeDuration, startPosition]
   )
 
   const loadRoute = useCallback((route) => {
@@ -148,6 +154,7 @@ export function useRoute() {
     routeDuration,
     isCalculating,
     savedRoutes,
+    hasStart,
     addWaypoint,
     removeWaypoint,
     updateWaypoint,

@@ -11,24 +11,6 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const {
-    waypoints,
-    routeCoords,
-    routeDistance,
-    routeDuration,
-    isCalculating,
-    savedRoutes,
-    addWaypoint,
-    removeWaypoint,
-    updateWaypoint,
-    moveWaypoint,
-    clearWaypoints,
-    saveCurrentRoute,
-    loadRoute,
-    deleteSavedRoute,
-    importRoute,
-  } = useRoute()
-
-  const {
     position: gpsPosition,
     heading: gpsHeading,
     speed: gpsSpeed,
@@ -39,6 +21,25 @@ export default function App() {
     startTracking,
     stopTracking,
   } = useGPS()
+
+  const {
+    waypoints,
+    routeCoords,
+    routeDistance,
+    routeDuration,
+    isCalculating,
+    savedRoutes,
+    hasStart,
+    addWaypoint,
+    removeWaypoint,
+    updateWaypoint,
+    moveWaypoint,
+    clearWaypoints,
+    saveCurrentRoute,
+    loadRoute,
+    deleteSavedRoute,
+    importRoute,
+  } = useRoute(gpsPosition)
 
   const handleMapClick = useCallback(
     (latlng) => {
@@ -103,6 +104,7 @@ export default function App() {
             gpsPosition={gpsPosition}
             gpsHeading={gpsHeading}
             trackHistory={trackHistory}
+            hasStart={hasStart}
           />
 
           {isCalculating && (
@@ -133,7 +135,7 @@ export default function App() {
               {sidebarOpen ? '▾' : '▴'}
             </span>
             <span className="sidebar-toggle-text">
-              {sidebarOpen ? 'Cerrar' : `${waypoints.length} pts`}
+              {sidebarOpen ? 'Cerrar' : `${waypoints.length + (hasStart ? 1 : 0)} pts`}
             </span>
           </button>
         </div>
@@ -149,6 +151,8 @@ export default function App() {
             isCalculating={isCalculating}
             onRemoveWaypoint={handleRemoveWaypoint}
             onMoveWaypoint={handleMoveWaypoint}
+            startPosition={gpsPosition}
+            hasStart={hasStart}
           />
           <GPSPanel
             position={gpsPosition}

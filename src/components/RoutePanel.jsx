@@ -7,12 +7,16 @@ export default function RoutePanel({
   isCalculating,
   onRemoveWaypoint,
   onMoveWaypoint,
+  startPosition,
+  hasStart,
 }) {
   const totalAscent = useMemo(() => {
     return 0
   }, [waypoints])
 
-  if (waypoints.length === 0) {
+  const pointCount = waypoints.length + (hasStart ? 1 : 0)
+
+  if (pointCount === 0) {
     return (
       <div className="route-panel">
         <div className="route-panel-header">
@@ -29,7 +33,7 @@ export default function RoutePanel({
   return (
     <div className="route-panel">
       <div className="route-panel-header">
-        <h3>Ruta ({waypoints.length} pts)</h3>
+        <h3>Ruta ({pointCount} pts)</h3>
       </div>
 
       <div className="route-stats">
@@ -56,6 +60,20 @@ export default function RoutePanel({
       </div>
 
       <div className="waypoint-list">
+        {hasStart && startPosition && (
+          <div className="waypoint-item waypoint-start">
+            <span className="waypoint-index start-index">0</span>
+            <div className="waypoint-coords">
+              <span className="start-label-text">Mi posición</span>
+              <span className="start-coords">
+                {startPosition.lat.toFixed(5)}, {startPosition.lng.toFixed(5)}
+              </span>
+            </div>
+            <div className="waypoint-actions">
+              <span className="start-badge">GPS</span>
+            </div>
+          </div>
+        )}
         {waypoints.map((wp, i) => (
           <div key={`wp-${i}`} className="waypoint-item">
             <span className="waypoint-index">{i + 1}</span>

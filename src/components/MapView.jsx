@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef } from 'react'
 import { MapContainer, TileLayer, Polyline, useMapEvents, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import DraggableMarker from './DraggableMarker'
@@ -33,24 +33,27 @@ function FitBounds({ waypoints }) {
   return null
 }
 
-function GPSPosition({ position, heading }) {
+function StartMarker({ position, heading, hasStart }) {
   const map = useMap()
 
   useEffect(() => {
     if (!position) return
     const icon = L.divIcon({
-      className: 'gps-marker',
-      html: `<div class="gps-dot" style="transform: rotate(${heading || 0}deg)">▶</div>`,
-      iconSize: [24, 24],
-      iconAnchor: [12, 12],
+      className: 'start-marker',
+      html: `<div class="start-dot" style="transform: rotate(${heading || 0}deg)">
+        <span class="start-label">0</span>
+        <span class="start-arrow">▶</span>
+      </div>`,
+      iconSize: [36, 36],
+      iconAnchor: [18, 18],
     })
     const marker = L.marker([position.lat, position.lng], { icon, zIndexOffset: 1000 }).addTo(map)
     const accuracyCircle = L.circle([position.lat, position.lng], {
       radius: 20,
-      color: '#2563eb',
-      fillColor: '#3b82f6',
-      fillOpacity: 0.1,
-      weight: 1,
+      color: '#16a34a',
+      fillColor: '#22c55e',
+      fillOpacity: 0.15,
+      weight: 2,
     }).addTo(map)
 
     return () => {
@@ -81,6 +84,7 @@ export default function MapView({
   gpsPosition,
   gpsHeading,
   trackHistory,
+  hasStart,
 }) {
   const defaultCenter = [40.4168, -3.7038]
   const defaultZoom = 6
@@ -124,7 +128,7 @@ export default function MapView({
 
       {gpsPosition && (
         <>
-          <GPSPosition position={gpsPosition} heading={gpsHeading} />
+          <StartMarker position={gpsPosition} heading={gpsHeading} hasStart={hasStart} />
           <TrackHistoryLine trackHistory={trackHistory} />
         </>
       )}
