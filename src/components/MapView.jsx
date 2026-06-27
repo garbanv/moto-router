@@ -14,26 +14,34 @@ function MapClickHandler({ onMapClick, mode }) {
   return null
 }
 
-function FitBounds({ waypoints }) {
+function FitBounds({ waypoints, gpsPosition, followMode, isTracking }) {
   const map = useMap()
   const prevLenRef = useRef(0)
 
   useEffect(() => {
+    if (followMode && gpsPosition && isTracking) {
+      map.setView([gpsPosition.lat, gpsPosition.lng], 16, { animate: true })
+      return
+    }
+
     if (waypoints.length > 0 && waypoints.length !== prevLenRef.current) {
       prevLenRef.current = waypoints.length
       if (waypoints.length === 1) {
         map.setView([waypoints[0].lat, waypoints[0].lng], map.getZoom())
       } else {
         const bounds = L.latLngBounds(waypoints.map((wp) => [wp.lat, wp.lng]))
+        if (gpsPosition && isTracking) {
+          bounds.extend([gpsPosition.lat, gpsPosition.lng])
+        }
         map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 })
       }
     }
-  }, [waypoints, map])
+  }, [waypoints, gpsPosition, followMode, isTracking, map])
 
   return null
 }
 
-function StartMarker({ position, heading, hasStart }) {
+function StartMarker({ position, heading }) {
   const map = useMap()
 
   useEffect(() => {
@@ -85,6 +93,8 @@ export default function MapView({
   gpsHeading,
   trackHistory,
   hasStart,
+  followMode,
+  isTracking,
 }) {
   const defaultCenter = [40.4168, -3.7038]
   const defaultZoom = 6
@@ -103,7 +113,12 @@ export default function MapView({
 
       <MapClickHandler onMapClick={onMapClick} mode={mode} />
 
-      <FitBounds waypoints={waypoints} />
+      <FitBounds
+        waypoints={waypoints}
+        gpsPosition={gpsPosition}
+        followMode={followMode}
+        isTracking={isTracking}
+      />
 
       {waypoints.map((wp, i) => (
         <DraggableMarker
@@ -128,7 +143,7 @@ export default function MapView({
 
       {gpsPosition && (
         <>
-          <StartMarker position={gpsPosition} heading={gpsHeading} hasStart={hasStart} />
+          <StartMarker position={gpsPosition} heading={gpsHeading} />
           <TrackHistoryLine trackHistory={trackHistory} />
         </>
       )}

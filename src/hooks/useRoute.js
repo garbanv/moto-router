@@ -15,17 +15,17 @@ function saveRoutes(routes) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(routes))
   } catch {
-    // localStorage may be full or unavailable
   }
 }
 
-export function useRoute(startPosition) {
+export function useRoute() {
   const [waypoints, setWaypoints] = useState([])
   const [routeCoords, setRouteCoords] = useState([])
   const [routeDistance, setRouteDistance] = useState(0)
   const [routeDuration, setRouteDuration] = useState(0)
   const [savedRoutes, setSavedRoutes] = useState(loadRoutes)
   const [isCalculating, setIsCalculating] = useState(false)
+  const startPosRef = useRef(null)
   const abortRef = useRef(null)
 
   const addWaypoint = useCallback((latlng) => {
@@ -67,9 +67,7 @@ export function useRoute(startPosition) {
       return
     }
 
-    if (abortRef.current) {
-      abortRef.current.abort()
-    }
+    if (abortRef.current) abortRef.current.abort()
     const controller = new AbortController()
     abortRef.current = controller
 
@@ -101,17 +99,24 @@ export function useRoute(startPosition) {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      calculateRoute(waypoints, startPosition)
+      calculateRoute(waypoints, startPosRef.current)
     }, 300)
     return () => clearTimeout(timer)
-  }, [waypoints, calculateRoute, startPosition])
+  }, [waypoints, calculateRoute])
 
-  const hasStart = startPosition && waypoints.length > 0
+  const recalculateFrom = useCallback((startPos) => {
+    startPosRef.current = startPos
+    if (startPos && waypoints.length > 0) {
+      calculateRoute(waypoints, startPos)
+    }
+  }, [waypoints, calculateRoute])
+
+  const hasStart = !!(startPosRef.current && waypoints.length > 0)
 
   const saveCurrentRoute = useCallback(
     (name) => {
-      const saveWps = startPosition
-        ? [{ lat: startPosition.lat, lng: startPosition.lng, _start: true }, ...waypoints]
+      const saveWps = startPosRef.current
+        ? [{ lat: startPosRef.current.lat, lng: startPosRef.current.lng, _start: true }, ...waypoints]
         : [...waypoints]
       if (saveWps.length === 0) return
       const route = {
@@ -128,7 +133,7 @@ export function useRoute(startPosition) {
         return next
       })
     },
-    [waypoints, routeDistance, routeDuration, startPosition]
+    [waypoints, routeDistance, routeDuration]
   )
 
   const loadRoute = useCallback((route) => {
@@ -164,5 +169,6 @@ export function useRoute(startPosition) {
     loadRoute,
     deleteSavedRoute,
     importRoute,
+    recalculateFrom,
   }
 }

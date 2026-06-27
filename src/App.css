@@ -675,6 +675,62 @@ html, body, #root {
   opacity: 0.5;
 }
 
+/* === OFF-ROUTE BADGE === */
+.offroute-badge {
+  position: absolute;
+  top: 52px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: rgba(239, 68, 68, 0.9);
+  border: 1px solid #ef4444;
+  border-radius: var(--radius);
+  font-size: 12px;
+  font-weight: 500;
+  color: white;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* === FOLLOW BUTTON === */
+.follow-btn {
+  position: absolute;
+  bottom: 70px;
+  right: 12px;
+  z-index: 1000;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 18px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  transition: all 0.15s;
+}
+
+.follow-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 2px 12px rgba(59, 130, 246, 0.4);
+}
+
+.follow-icon {
+  line-height: 1;
+}
+
 /* === SIDEBAR TOGGLE (mobile) === */
 .sidebar-toggle {
   display: none;
@@ -747,6 +803,14 @@ html, body, #root {
 
   .sidebar-toggle-icon {
     font-size: 10px;
+  }
+
+  .follow-btn {
+    bottom: 80px;
+    right: 10px;
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
   }
 
   /* Sidebar: bottom sheet */
